@@ -1,67 +1,62 @@
 <template>
 <div id="audio">
-  <div class="player-wrapper  ">
+  <div class="audio-player">
+    <div class="playback-controls">
+      <button class="prev">Previous</button>
+      <button v-on:click.prevent="playOrPause" title="Play/Pause" :class="{ play: !playing, pause: playing }" v-if="!isBuffering">
+        Play/Pause
+      </button>
+<!--  -->
+<div v-if="isBuffering && !firstPlay">
+  <div class="loader loader--style3" title="2">
+  <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     width="40px" height="40px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+  <path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+    <animateTransform attributeType="xml"
+      attributeName="transform"
+      type="rotate"
+      from="0 25 25"
+      to="360 25 25"
+      dur="0.6s"
+      repeatCount="indefinite"/>
+    </path>
+  </svg>
+</div>
+</div>
+      <!--  -->
+      <button class="next">Next</button>
+    </div>
+    <div class="current-track">
 
+      <div class="scrub-time">
 
-  <div class='scrub'>
-    <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" :formatter="showTimeForPercent"></vue-slider>
-  </div>
-  <div class="player">
-    <div class="player-controls">
-      <div>
-        <button v-on:click.prevent="playOrPause" title="Play/Pause">
-<svg width="18px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-<path v-if="!playing" fill="currentColor" d="M15,10.001c0,0.299-0.305,0.514-0.305,0.514l-8.561,5.303C5.51,16.227,5,15.924,5,15.149V4.852c0-0.777,0.51-1.078,1.135-0.67l8.561,5.305C14.695,9.487,15,9.702,15,10.001z" />
-<path v-else fill="currentColor" d="M15,3h-2c-0.553,0-1,0.048-1,0.6v12.8c0,0.552,0.447,0.6,1,0.6h2c0.553,0,1-0.048,1-0.6V3.6C16,3.048,15.553,3,15,3z M7,3H5C4.447,3,4,3.048,4,3.6v12.8C4,16.952,4.447,17,5,17h2c0.553,0,1-0.048,1-0.6V3.6C8,3.048,7.553,3,7,3z" />
-</svg>
-</button>
-      </div>
-      <div>
-        <div v-on:click="seek" class="player-progress" title="Time played : Total time">
-
-        </div>
-        <div class="player-time">
-          <div class="player-time-current">{{ currentTime }}</div>
-          <div v-if="audio !== undefined && audio.networkState === 2 && !firstPlay">
-            <div class="loader loader--style3" title="2">
-            <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-               width="40px" height="40px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
-            <path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
-              <animateTransform attributeType="xml"
-                attributeName="transform"
-                type="rotate"
-                from="0 25 25"
-                to="360 25 25"
-                dur="0.6s"
-                repeatCount="indefinite"/>
-              </path>
-            </svg>
+        <div class='scrub'>
+          <div class="now-playing">
+            Sample Podcast Show Name Goes Here -Season No. Episode No. and Title Goes Here
           </div>
+
+          <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" :formatter="showTimeForPercent">
+            <template v-slot:dot>
+              <img src="data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='25' viewBox='0 0 7 25' width='7' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m0 0h7v25h-7z' fill='%23fff'/%3e%3c/svg%3e" class="custom-dot"/>
+            </template>
+          </vue-slider>
+          <!-- <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" :formatter="showTimeForPercent"></vue-slider> -->
+          <div class="time">
+          {{ currentTime }} | {{ durationTime }}
           </div>
-          <div class="player-time-total">{{ durationTime }}</div>
         </div>
+
       </div>
-      <div>
-        <a v-on:click.prevent="mute" title="Mute" href="#">
-<svg width="18px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-<path v-if="!muted" fill="currentColor" d="M5.312,4.566C4.19,5.685-0.715,12.681,3.523,16.918c4.236,4.238,11.23-0.668,12.354-1.789c1.121-1.119-0.335-4.395-3.252-7.312C9.706,4.898,6.434,3.441,5.312,4.566z M14.576,14.156c-0.332,0.328-2.895-0.457-5.364-2.928C6.745,8.759,5.956,6.195,6.288,5.865c0.328-0.332,2.894,0.457,5.36,2.926C14.119,11.258,14.906,13.824,14.576,14.156zM15.434,5.982l1.904-1.906c0.391-0.391,0.391-1.023,0-1.414c-0.39-0.391-1.023-0.391-1.414,0L14.02,4.568c-0.391,0.391-0.391,1.024,0,1.414C14.41,6.372,15.043,6.372,15.434,5.982z M11.124,3.8c0.483,0.268,1.091,0.095,1.36-0.388l1.087-1.926c0.268-0.483,0.095-1.091-0.388-1.36c-0.482-0.269-1.091-0.095-1.36,0.388L10.736,2.44C10.468,2.924,10.642,3.533,11.124,3.8z M19.872,6.816c-0.267-0.483-0.877-0.657-1.36-0.388l-1.94,1.061c-0.483,0.268-0.657,0.878-0.388,1.36c0.268,0.483,0.877,0.657,1.36,0.388l1.94-1.061C19.967,7.907,20.141,7.299,19.872,6.816z" />
-<path v-else fill="currentColor" d="M14.201,9.194c1.389,1.883,1.818,3.517,1.559,3.777c-0.26,0.258-1.893-0.17-3.778-1.559l-5.526,5.527c4.186,1.838,9.627-2.018,10.605-2.996c0.925-0.922,0.097-3.309-1.856-5.754L14.201,9.194z M8.667,7.941c-1.099-1.658-1.431-3.023-1.194-3.26c0.233-0.234,1.6,0.096,3.257,1.197l1.023-1.025C9.489,3.179,7.358,2.519,6.496,3.384C5.568,4.31,2.048,9.261,3.265,13.341L8.667,7.941z M18.521,1.478c-0.39-0.391-1.023-0.391-1.414,0L1.478,17.108c-0.391,0.391-0.391,1.024,0,1.414c0.391,0.391,1.023,0.391,1.414,0l15.629-15.63C18.912,2.501,18.912,1.868,18.521,1.478z" />
-</svg>
-</a>
-      </div>
-      <div>
-        <a v-on:click.prevent="" v-on:mouseenter="showVolume = true" title="Volume" href="#">
-<svg width="18px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-<path fill="currentColor" d="M19,13.805C19,14.462,18.462,15,17.805,15H1.533c-0.88,0-0.982-0.371-0.229-0.822l16.323-9.055C18.382,4.67,19,5.019,19,5.9V13.805z" />
-</svg>
-<input v-model.lazy.number="volume" v-show="showVolume" type="range" min="0" max="100" />
-</a>
-      </div>
+    </div>
+
+    <div class="time-controls">
+      time
     </div>
     <audio loop="false" ref="audiofile" :src="file" preload="auto" style="display: none;"></audio>
   </div>
 
-</div>
+
+
 
 <div class="control-grid">
   <div classs="speeds">
@@ -125,6 +120,9 @@ export default {
     }
   },
   computed: {
+    isBuffering: function() {
+      return this.audio !== undefined && this.audio.networkState === 2;
+    },
     currentTime: function currentTime() {
       return this.convertTimeHHMMSS(this.currentSeconds);
     },
@@ -161,19 +159,17 @@ export default {
     convertTimeHHMMSS: function convertTimeHHMMSS(val) {
       var hhmmss = new Date(val * 1000).toISOString().substr(11, 8);
 
-      return hhmmss.indexOf("00:") === 0 ? hhmmss.substr(3) : hhmmss;
+      let value = hhmmss.indexOf("00:") === 0 ? hhmmss.substr(3) : hhmmss;
+      return value.replace(/^01+/, '1').replace(/^02+/, '2');
     },
     showTimeForPercent: function (value) {
       if (this.loaded) {
         if (!isNaN(parseInt(this.audio.duration * (value * 0.01)))) {
-          return this.convertTimeHHMMSS(parseInt(this.audio.duration * (value * 0.01)))
+          value = this.convertTimeHHMMSS(parseInt(this.audio.duration * (value * 0.01)));
         }
-
-      } else {
-
-        return value;
       }
 
+      return value;
       // return this.convertTimeHHMMSS();
     },
     playOrPause: function playOrPause() {
@@ -259,16 +255,122 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-@import url('https://fonts.googleapis.com/css?family=Nunito:400,700');
+<style lang="scss">
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700');
 body {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Roboto', sans-serif;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* real stuff */
+
+.audio-player {
+   width: 100%;
+   background-color: #000;
+   color: #fff;
+   height: 80px;
+   display: grid;
+   align-items: center;
+   text-align: left;
+   grid-template-columns: 1fr 2.5fr 1fr;
+
+   .playback-controls {
+     padding-left: 40px;
+     button {
+       border: 0px;
+       width: 40px;
+       height: 40px;
+       background-size: 100%;
+       text-indent: -6000px;
+       overflow:hidden;
+       transition: all 0.4s ease-in-out;
+       &:hover {
+         cursor: pointer;
+         opacity: 0.8;
+       }
+     }
+
+     .prev {
+       background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2' transform='matrix(-1 0 0 -1 40 40)'/%3e%3cg fill='%23fff'%3e%3cpath d='m27.5 29.2416-10.9015-8.7416 10.9015-8.7416z' stroke='%23fff' stroke-width='2'/%3e%3cpath d='m17.9999 31h5.44444v21h-5.44444z' transform='matrix(-1 0 0 -1 35.9998 62)'/%3e%3c/g%3e%3c/svg%3e");
+       margin-right: 19px;
+     }
+
+     .play {
+       background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m32 19.5-18.75 10.8253v-21.65062z' fill='%23fff'/%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2'/%3e%3c/svg%3e");
+       margin-right: 19px;
+     }
+
+     .pause {
+       background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2'/%3e%3cg fill='%23fff'%3e%3cpath d='m13 9h5.44444v21h-5.44444z'/%3e%3cpath d='m22.5555 9h5.44444v21h-5.44444z'/%3e%3c/g%3e%3c/svg%3e");
+       margin-right: 19px;
+     }
+
+
+
+     .next {
+       background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2'/%3e%3cg fill='%23fff'%3e%3cpath d='m12.5 10.7583 10.9015 8.7417-10.9015 8.7416z' stroke='%23fff' stroke-width='2'/%3e%3cpath d='m22.0001 9h5.44444v21h-5.44444z'/%3e%3c/g%3e%3c/svg%3e");
+     }
+   }
+   .current-track {
+
+
+     .scrub {
+       margin-top: 5px;
+       display: grid;
+       // grid-template-columns: 3fr 1fr;
+
+       .now-playing {
+         font-size: 14px;
+         text-align: center;
+         grid-column: 1;
+         margin-bottom: 8px;
+       }
+
+       .vue-slider-component {
+         grid-column: 1;
+          grid-row: 2;
+          max-width: 600px;
+
+
+          .vue-slider {
+            background-color: #666 !important;
+            border-radius: 0px !important;
+
+          }
+          .custom-dot {
+            margin-top: -4px !important;
+          }
+
+          .vue-slider-process {
+            background-color: #c3c3c3;
+          }
+
+          .vue-slider-horizontal .vue-slider-dot {
+
+              left: 9px !important;
+
+          }
+
+       }
+
+       .time {
+          font-size: 14px;
+          grid-column: 2;
+           grid-row: 2;
+       }
+     }
+   }
+}
+
+
+
+.grid {
 
 }
 
+/* fpo stuff */
 button {
   border: 2px solid #000;
   padding: 5px;
@@ -291,10 +393,7 @@ button.active {
   width: 40vw;
   margin: 0 auto;
 }
-.scrub {
-  width: 500px;
 
-}
 .player {
   width: 500px;
   background-color: #fff;
