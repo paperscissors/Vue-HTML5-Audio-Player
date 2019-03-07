@@ -50,7 +50,9 @@
     </div>
 
     <div class="time-controls">
-      time
+      <button class="speed" @click="toggleSpeed">
+        {{ playbackSpeedDisplay }}
+      </button>
     </div>
     <audio loop="false" ref="audiofile" :src="file" preload="auto" style="display: none;"></audio>
   </div>
@@ -59,12 +61,7 @@
 
 
 <div class="control-grid">
-  <div classs="speeds">
-    <h4>Playback speed</h4>
-    <button v-on:click.prevent="setSpeed('1')" :class="{ active: speedMatches('1.0') }">full speed</button>
-    <button v-on:click.prevent="setSpeed('1.5')" :class="{ active: speedMatches('1.5') }">1.5x speed</button>
-    <button v-on:click.prevent="setSpeed('2')" :class="{ active: speedMatches('2.0') }">2x speed</button>
-  </div>
+
 
   <div classs="skip" style="margin-top: 20px;">
     <h4>Skip forward or back</h4>
@@ -107,7 +104,8 @@ export default {
       volume: 100,
       scrub: 0,
       currentPlayer: false,
-      firstPlay:true
+      firstPlay:true,
+      playbackSpeed: 1
     }
   },
   components: {
@@ -134,6 +132,17 @@ export default {
     },
     muted: function muted() {
       return this.volume / 100 === 0;
+    },
+    playbackSpeedDisplay: function() {
+      let speed;
+
+      if (Number.isInteger(this.playbackSpeed)) {
+        speed = this.playbackSpeed + ".00"
+      } else {
+        speed = this.playbackSpeed.toString();
+        if (speed.slice(-2) == ".5") speed = speed + "0";
+      }
+      return speed + "X";
     }
   },
 
@@ -182,8 +191,16 @@ export default {
         this.audio.pause();
       }
     },
-    setSpeed: function(speed) {
-      this.audio.playbackRate = parseFloat(speed);
+    toggleSpeed: function() {
+      console.log("fired", this.playbackSpeed);
+
+      if (this.playbackSpeed < 2) {
+        this.playbackSpeed = this.playbackSpeed + 0.25;
+      } else {
+        this.playbackSpeed = 1;
+      }
+
+      this.audio.playbackRate = this.playbackSpeed;
     },
     isActivePlayer: function(player) {
       return player === parseInt(this.currentPlayer);
@@ -359,6 +376,17 @@ body {
           font-size: 14px;
           grid-column: 2;
            grid-row: 2;
+       }
+     }
+   }
+   .time-controls {
+     .speed {
+       background-color: #000000 !important;
+       color: #ffffff;
+       border: 0px !important;
+       font-size: 28px;
+       &:hover {
+         cursor: pointer;
        }
      }
    }
