@@ -1,5 +1,4 @@
 <template>
-<div id="audio">
   <div class="audio-player">
     <div class="playback-controls">
       <button class="prev">Previous</button>
@@ -63,14 +62,13 @@
   </div>
 
 
-<div class="players" style="margin-top: 20px;">
+<!-- <div class="players" style="margin-top: 20px;">
   <h4>Show play buttons</h4>
   <button :class="{ active: isActivePlayer(15) }" v-on:click.prevent="setStream" data-player="15" data-url="https://streaming.xray.fm/track/podcasts/9/1294/this_is_cannabis_1-31-19_PODCAST_FINAL.mp3">This is a show play button</button>
   <button :class="{ active: isActivePlayer(20) }" v-on:click.prevent="setStream" data-player="20" data-url="http://feeds.soundcloud.com/stream/579078861-the-non-profit-hour-nphh-s7e4-animal-aid.mp3">Another show play</button>
   <button :class="{ active: isActivePlayer(25) }" v-on:click.prevent="setStream" data-player="25" data-url="http://www.copyofcopy.com/audio/HeavyBreather_TheWeepingAlpha_02-14-19.mp3">{{ this.$attrs['data-player'] }}A third one</button>
   <button :class="{ active: isActivePlayer(35) }" v-on:click.prevent="setStream" data-player="35" data-url="https://xraystreaming.sfo2.digitaloceanspaces.com/podcasts/11/1296/Ep%2079.%20It%20Takeas%20A%20Village%20To%20Raise%20A%20Chanti%20ft.%20Chanti%20Darling.m4a.mp3">Probably a fourth</button>
-</div>
-  </div>
+</div> -->
 </template>
 
 <script>
@@ -100,7 +98,7 @@ export default {
   components: {
     vueSlider
   },
-  props: ['now_playing','artwork','link','file'],
+  props: ['now_playing','artwork','link','file','playlist'],
   computed: {
     isBuffering: function() {
   /*  0 = NETWORK_EMPTY - audio/video has not yet been initialized
@@ -180,8 +178,6 @@ export default {
       }
     },
     toggleSpeed: function() {
-      console.log("fired", this.playbackSpeed);
-
       if (this.playbackSpeed < 2) {
         this.playbackSpeed = this.playbackSpeed + 0.25;
       } else {
