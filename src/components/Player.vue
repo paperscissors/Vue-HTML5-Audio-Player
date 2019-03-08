@@ -100,12 +100,7 @@ export default {
   components: {
     vueSlider
   },
-  props: {
-    file: {
-      type: String,
-      default: null
-    }
-  },
+  props: ['now_playing','artwork','link','file'],
   computed: {
     isBuffering: function() {
   /*  0 = NETWORK_EMPTY - audio/video has not yet been initialized
@@ -415,89 +410,8 @@ body {
    }
 }
 
-
-/* fpo stuff */
-button {
-  border: 2px solid #000;
-  padding: 5px;
-  background-color: white;
-  margin-right: 3px;
-}
+// fpo
 button.active {
     background-color: pink;
-}
-
-.player-wrapper {
-  padding-top: 20vh;
-  align-items: center;
-  background-color: #fff;
-  display: grid;
-  grid-auto-rows: 50px;
-
-  justify-content: center;
-  height: 20vh;
-  width: 40vw;
-  margin: 0 auto;
-}
-
-.player {
-  width: 500px;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.15);
-  color: #404040;
-  line-height: 1.5625;
-}
-
-.player-controls {
-  display: flex;
-}
-
-.player-controls>div {
-  border-right: 1px solid #e0e0e0;
-}
-
-.player-controls>div:last-child {
-  border-right: none;
-}
-
-.player-controls>div a {
-  color: #404040;
-  display: block;
-  line-height: 0;
-  padding: 1em;
-  text-decoration: none;
-}
-
-.player-progress {
-  background-color: #e0e0e0;
-  cursor: pointer;
-  height: 50%;
-  min-width: 200px;
-  position: relative;
-}
-
-.player-progress .player-seeker {
-  background-color: #404040;
-  bottom: 0;
-  left: 0;
-  position: absolute;
-  top: 0;
-}
-
-.player-time {
-  display: flex;
-  justify-content: space-between;
-}
-
-.player-time .player-time-current {
-  font-weight: 700;
-  padding-left: 5px;
-}
-
-.player-time .player-time-total {
-  opacity: 0.5;
-  padding-right: 5px;
 }
 </style>
