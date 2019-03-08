@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" style="background-color:#000">
     <Player file="https://streaming.xray.fm/track/podcasts/9/1294/this_is_cannabis_1-31-19_PODCAST_FINAL.mp3"/>
   </div>
 </template>

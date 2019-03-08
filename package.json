@@ -1,13 +1,13 @@
 {
   "name": "@paperscissors/vue-html5-audio-player",
   "author": "paperscissors",
-  "main": "./src/Player.vue",
+  "main": "./src/components/Player.vue",
   "license": "(MIT OR Apache-2.0)",
-  "version": "0.1.2",
+  "version": "0.1.8",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build-bundle": "vue-cli-service build --target lib --name DragAndDropSelect src/Player.vue",
+    "build-bundle": "vue-cli-service build --target lib --name DragAndDropSelect src/components/Player.vue",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
