@@ -1,5 +1,5 @@
 <template>
-    <div class="audio-player">
+    <div class="audio-player" :class="getSettings('width') == 600 ? 'small-player': ''">
         <div class="audio-player-grid">
             <div class="playback-controls">
                 <button v-if="getSettings('previous')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
@@ -124,7 +124,6 @@
         </transition>
 
         <div v-if="getSettings('playlist')" class="playlist">
-          <h4>Playlist</h4>
             <ul>
               <li v-for="track in playlist">
 
@@ -160,7 +159,8 @@
                 isPlayHovered: false,
                 windowWidth: 0,
                 isBuffering: false,
-                track_title: this.getSettings('playlist') ? this.playlist[0].name : this.now_playing
+                track_title: this.getSettings('playlist') ? this.playlist[0].name : this.now_playing,
+                width: null
             }
         },
         components: {
@@ -415,6 +415,7 @@
             });*/
         },
         mounted: function mounted() {
+            // this.width = this.getComponentWidth();
             this.audio = this.$el.querySelectorAll('audio')[0];
             this.audio.addEventListener('timeupdate', this.update);
             this.audio.addEventListener('loadeddata', this.load);
@@ -831,7 +832,7 @@
 
     div.playlist {
       color: #000;
-
+      padding-top: 10px;
       ul {
       list-style: none;
       text-indent: 0px;
@@ -861,6 +862,59 @@
       }
     }
     }
+
+    .audio-player.small-player {
+        .current-track .scrub {
+          grid-template-columns: 5.6fr 2.8fr !important;
+        }
+
+        .current-track .scrub .now-playing {
+          grid-column: span 2;
+        }
+
+        .current-track .scrub .vue-slider-component .custom-dot {
+            margin-top: -1px !important;
+            margin-left: 4px !important;
+            height: 19px;
+        }
+
+        .playback-controls button:not(.button-override) {
+          border: 0px;
+          width: 20px;
+          height: 28px;
+          background-size: 100%;
+          text-indent: -6000px;
+          overflow: hidden;
+          -webkit-transition: opacity 0.4s ease-in-out;
+          transition: opacity 0.4s ease-in-out;
+          background-repeat: no-repeat;
+          background-position: center;
+      }
+
+      .time-controls .speed {
+
+          font-size: 20px !important;
+      }
+
+      .time-controls .skip-back {
+      width: 37px !important;
+      height: 37px !important;
+      margin-top: 5px;
+      padding: 0px;
+    }
+
+    .time-controls .skip-forward {
+        width: 37px !important;
+        height: 37px !important;
+        padding: 0px;
+        margin-top: 5px;
+        margin-right: 10px;
+    }
+
+    .playback-controls {
+        padding-left: 20px;
+    }
+  }
 
     @-webkit-keyframes rotation {
         from {

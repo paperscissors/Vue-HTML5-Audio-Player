@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="player_wrapper" ref="player_wrapper" v-bind:style="{ width:playerWidth }">
     <Player file="https://streaming.xray.fm/track/podcasts/9/1294/this_is_cannabis_1-31-19_PODCAST_FINAL.mp3" :playlist="playlist" :settings="settings"/>
   </div>
 </template>
@@ -8,7 +8,7 @@
 import Player from './components/Player.vue'
 
 export default {
-  name: 'app',
+  name: 'player_wrapper',
   data: function() {
       return {
           playlist: [
@@ -26,9 +26,21 @@ export default {
             speed: true,
             skip: true,
             previous: true,
-            next: true
+            next: true,
+            width: 600
           }
       }
+  },
+  computed: {
+    playerWidth() {
+      if (this.settings.width !== undefined) {
+        if (typeof this.settings.width == 'number') {
+           return this.settings.width + 'px';
+        }
+      }
+
+      return 'auto';
+    }
   },
   components: {
     Player
@@ -37,13 +49,12 @@ export default {
 </script>
 
 <style>
-#app {
+#player_wrapper {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  max-width: 600px;
   margin: 0 auto;
 }
 </style>
