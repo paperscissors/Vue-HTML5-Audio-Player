@@ -1,5 +1,5 @@
 <template>
-    <div class="audio-player" :class="getSettings('width') == 600 ? 'small-player': ''">
+    <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 ? 'small-player': ''" v-bind:style="{ width:playerWidth }">
         <div class="audio-player-grid">
             <div class="playback-controls">
                 <button v-if="getSettings('previous')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
@@ -168,6 +168,15 @@
         },
         props: ['now_playing','artwork','link','file','playlist', 'metadata', 'router', 'isPlaying', 'settings'],
         computed: {
+            playerWidth() {
+              if (this.settings.width !== undefined) {
+                if (typeof this.settings.width == 'number') {
+                   return this.settings.width + 'px';
+                }
+              }
+
+              return 'auto';
+            },
             currentTime: function currentTime() {
                 if (Number.isInteger(this.currentSeconds)) {
                     return this.convertTimeHHMMSS(this.currentSeconds);
@@ -259,7 +268,6 @@
                 return false;
             },
             next: function() {
-              console.log(this.playlist);
                 let current_position = this.playlist.findIndex(x => x.url === this.audio.src);
                 let max_position = this.playlist.length - 1;
 
@@ -308,7 +316,6 @@
                     document.getElementById('audioplayer').removeEventListener('stalled', this.$parent.playAudioElement);*/
 
                     if (this.isMobile) {
-                        console.log('is this being triggered')
                         this.expanded = this.playing;
                         this.$emit('expanded', this.playing);
                     }
@@ -318,7 +325,6 @@
                 }
             },
             toggleExpandedOnMobile() {
-                console.log(this.isMobile, this.expanded, this.playing);
                 if (this.isMobile && !this.expanded && !this.playing) { //
                     this.expanded = true;
                     this.$emit('expanded', true);
@@ -431,6 +437,7 @@
             this.$nextTick(() => {
                 window.addEventListener('resize', this.getWindowWidth);
                 this.getWindowWidth()
+                this.width = this.$el.offsetWidth;
             })
         },
         destroyed: function() {
@@ -443,6 +450,12 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss">
+
+    .audio-player {
+      font-family: 'Avenir', Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     @mixin button-style {
         button:not(.button-override) {
             border: 0px;
