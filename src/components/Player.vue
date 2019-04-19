@@ -1,5 +1,5 @@
 <template>
-    <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 ? 'small-player': ''" v-bind:style="{ width:playerWidth }">
+    <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 && !isMobile ? 'small-player': ''" v-bind:style="{ width:playerWidth }">
         <div class="audio-player-grid">
             <div class="playback-controls">
                 <button v-if="getSettings('previous')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
@@ -13,14 +13,14 @@
                 <button v-if="getSettings('next')" aria-label="Play next" class="next" @click="next">Next</button>
 
                 <template v-if="isMobile">
-                    <button aria-label="Expand track info" class="expand" v-if="!expanded && metadata" @click="toggleExpand">Expand</button>
+                    <button aria-label="Expand track info" class="expand" v-if="!expanded && display_metadata" @click="toggleExpand">Expand</button>
                     <button aria-label="Collapse track info" class="collapse" v-if="expanded" @click="toggleExpand">Expand</button>
                 </template>
             </div>
             <div class="current-track" v-if="!isMobile">
                 <div class="scrub-time">
-                    <div class='scrub'>
-                        <div class="now-playing" v-html="track_title">
+                    <div class='scrub' :class="{ 'freeze-metadata': getSettings('freeze_metadata') }">
+                        <div class="now-playing" v-html="track_title" v-if="!getSettings('freeze_metadata')">
 
                         </div>
 
@@ -46,18 +46,21 @@
                   <button aria-label="Skip back 30 seconds" class="skip-back" v-on:click.prevent="skip(-30)" ></button>
                   <button aria-label="Skip forward 30 seconds" class="skip-forward" v-on:click.prevent="skip(30)"></button>
                 </template>
-                <button aria-label="Expand track info" class="expand" v-if="!expanded && metadata" @click="toggleExpand">Expand</button>
-                <button aria-label="Collapse track info" class="collapse" v-if="expanded" @click="toggleExpand">Collapse</button>
+                <template v-if="!getSettings('freeze_metadata')">
+                  <button aria-label="Expand track info" class="expand" v-if="!expanded && display_metadata" @click="toggleExpand">Expand</button>
+                  <button aria-label="Collapse track info" class="collapse" v-if="expanded" @click="toggleExpand">Collapse</button>
+                </template>
+
             </div>
 
         </div>
 
         <audio id='audioplayer' loop="false" ref="audiofile" :src="file" preload="auto" style="display: none;"></audio>
         <transition name="fade">
-            <div class="details" v-if="expanded && metadata">
+            <div class="details" v-if="expanded && display_metadata || getSettings('freeze_metadata') && display_metadata">
                 <div class="meta-grid" ref="metaGrid">
                     <div class="artwork">
-                        <img :src="metadata.image" :alt="metadata.podcast_and_show_name">
+                        <img :src="display_metadata.image" :alt="display_metadata.podcast_and_show_name">
                     </div>
 
                     <div class="text">
@@ -106,15 +109,15 @@
                                 </div>
                             </div>
                         </div>
-                        <h5 v-if="!isMobile">{{ metadata.name }}</h5>
-                        <h1 v-if="!isMobile">{{ metadata.podcast_name }}</h1>
+                        <h5 v-if="!isMobile">{{ display_metadata.name }}</h5>
+                        <h1 v-if="!isMobile">{{ display_metadata.podcast_name }}</h1>
                         <p v-if="!isMobile" v-html="metaDescription"></p>
                         <p v-if="!isMobile" class="more-info-links">
                             <!--<router-link :to="moreEpisodes">-->
                                 <!--VIEW MORE EPISODES-->
                             <!--</router-link>-->
 
-                            <a v-if="typeof metadata.more_info_links !== 'undefined'" :href="metadata.more_info_links['RSS Feed']" target="_blank">
+                            <a v-if="typeof display_metadata.more_info_links !== 'undefined'" :href="display_metadata.more_info_links['RSS Feed']" target="_blank">
                                 RSS FEED
                             </a>
                         </p>
@@ -123,10 +126,9 @@
             </div>
         </transition>
 
-        <div v-if="getSettings('playlist')" class="playlist">
+        <div v-if="getSettings('playlist') && playlist.length > 0" class="playlist">
             <ul>
               <li v-for="track in playlist">
-
                 <button class="standalone-button" :data-url="track.url" :data-name="track.name" @click="setStream" v-html="track.name"></button>
               </li>
             </ul>
@@ -160,6 +162,7 @@
                 windowWidth: 0,
                 isBuffering: false,
                 track_title: this.getSettings('playlist') ? this.playlist[0].name : this.now_playing,
+                display_metadata: this.getSettings('default_metadata') ? this.getSettings('default_metadata') : this.metadata,
                 width: null
             }
         },
@@ -169,7 +172,7 @@
         props: ['now_playing','artwork','link','file','playlist', 'metadata', 'router', 'isPlaying', 'settings'],
         computed: {
             playerWidth() {
-              if (this.settings.width !== undefined) {
+              if (this.settings.width !== undefined && !this.isMobile) {
                 if (typeof this.settings.width == 'number') {
                    return this.settings.width + 'px';
                 }
@@ -211,7 +214,7 @@
             metaDescription: function() {
 
                 var div = document.createElement("div");
-                div.innerHTML = this.metadata.description;
+                div.innerHTML = this.display_metadata.description;
                 var text = div.textContent || div.innerText || "";
 
                 return (text.length > 320) ? text.substr(0, 320-1) + '&hellip;' : text;
@@ -435,6 +438,7 @@
             });
 
             this.$nextTick(() => {
+
                 window.addEventListener('resize', this.getWindowWidth);
                 this.getWindowWidth()
                 this.width = this.$el.offsetWidth;
@@ -879,6 +883,10 @@
     .audio-player.small-player {
         .current-track .scrub {
           grid-template-columns: 5.6fr 2.8fr !important;
+
+          &.freeze-metadata {
+            margin-top: 2px;
+          }
         }
 
         .current-track .scrub .now-playing {
@@ -904,9 +912,13 @@
           background-position: center;
       }
 
+      .time-controls {
+        margin-right: 10px;
+      }
+
       .time-controls .speed {
 
-          font-size: 20px !important;
+          font-size: 16px !important;
       }
 
       .time-controls .skip-back {
@@ -921,11 +933,25 @@
         height: 37px !important;
         padding: 0px;
         margin-top: 5px;
-        margin-right: 10px;
     }
 
     .playback-controls {
         padding-left: 20px;
+    }
+
+    .meta-grid {
+      background-color: #000;
+      box-sizing: border-box;
+      padding: 20px;
+      grid-template-columns: 1.4fr 2fr;
+      .text {
+        margin-top: 0px;
+      }
+
+      .more-info-links a {
+        color: #fff;
+        font-weight: 600;
+      }
     }
   }
 

@@ -27,7 +27,8 @@ export default {
             skip: true,
             previous: true,
             next: true,
-            width: 600
+            width: 600,
+            default_metadata: {"name":"A Topical Conversation With Trista Okel of Empower BodyCare","id":619,"podcast_name":"This is Cannabis","podcast_and_show_name":"This is Cannabis - A Topical Conversation With Trista Okel of Empower BodyCare","slug":"","link":"show/this-is-cannabis","description":"<p>In this episode Lee & Emma talk to Trista Okel, Founder and CEO of&nbsp;<a href=\"https://www.empowerbodycare.com/\" >Empower BodyCare</a>, a best-selling topical products company. We discuss her journey from activist to entrepreneur, how topical products can be a non-addictive approach to pain management, and why she sees topicals&nbsp;as an ambassador for breaking down cannabisu2019 stigma.</p>","episode_number":22,"preheader":"CURRENT EPISODE - EP22","more_info_links":{"Listen":"https://streaming.xray.fm/track/podcasts/9/619/This_Is_Cannabis_1-3-19_PODCASSST.mp3","RSS Feed":"http://xray.test/rss/podcast/this-is-cannabis","Visit Page":"https://xraypod.com/show/this-is-cannabis"},"image":"https://cdn.xray.fm/sites/podcasts/episode/xray_content_43342724-142B-4E3F-8E0A-A495961FD3BD.jpg"}
           }
       }
   },
