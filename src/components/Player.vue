@@ -2,7 +2,7 @@
     <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 && !isMobile ? 'small-player': ''" v-bind:style="{ width:playerWidth }">
         <div class="audio-player-grid">
             <div class="playback-controls">
-                <button v-if="getSettings('previous')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
+                <button v-if="getSettings('back')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
                 <button aria-label="Play/Pause audio" @mouseover="isPlayHovered = true" @mouseout="isPlayHovered = false" v-on:click.prevent="playOrPause" title="Play/Pause" :class="{ play: !playing, pause: playing }" v-if="!isBuffering || firstPlay">
                     Play/Pause
                 </button>
@@ -46,7 +46,7 @@
                   <button aria-label="Skip back 30 seconds" class="skip-back" v-on:click.prevent="skip(-30)" ></button>
                   <button aria-label="Skip forward 30 seconds" class="skip-forward" v-on:click.prevent="skip(30)"></button>
                 </template>
-                <template v-if="!getSettings('freeze_metadata')">
+                <template v-if="!getSettings('freeze_metadata') && getSettings('enable_metadata')">
                   <button aria-label="Expand track info" class="expand" v-if="!expanded && display_metadata" @click="toggleExpand">Expand</button>
                   <button aria-label="Collapse track info" class="collapse" v-if="expanded" @click="toggleExpand">Collapse</button>
                 </template>
@@ -174,6 +174,8 @@
             playerWidth() {
               if (this.settings.width !== undefined && !this.isMobile) {
                 if (typeof this.settings.width == 'number') {
+                   let container_width = document.getElementById('player_wrapper').getBoundingClientRect();
+                   if (this.settings.width > container_width.width) return container_width.width + 'px';
                    return this.settings.width + 'px';
                 }
               }
@@ -855,7 +857,7 @@
       text-indent: 0px;
       margin: 0px;
       padding: 0px;
-      max-width: 600px;
+      // max-width: 600px;
       margin: 0 auto;
 
       text-align: left;
