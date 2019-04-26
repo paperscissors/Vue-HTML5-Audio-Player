@@ -161,8 +161,8 @@
                 isPlayHovered: false,
                 windowWidth: 0,
                 isBuffering: false,
-                track_title: this.getSettings('playlist') ? this.playlist[0].name : this.now_playing,
-                display_metadata: this.getSettings('default_metadata') ? this.getSettings('default_metadata') : this.metadata,
+                track_title: this.now_playing,
+                display_metadata: this.metadata,
                 width: null
             }
         },
@@ -426,6 +426,10 @@
             });*/
         },
         mounted: function mounted() {
+          this.$nextTick(function () {
+            this.track_title = this.getSettings('playlist') ? this.playlist[0].name : this.now_playing;
+            this.display_metadata = this.getSettings('default_metadata') ? this.getSettings('default_metadata') : this.metadata;
+          });
             // this.width = this.getComponentWidth();
             this.audio = this.$el.querySelectorAll('audio')[0];
             this.audio.addEventListener('timeupdate', this.update);
@@ -841,7 +845,7 @@
 
 
     .fade-enter-active, .fade-leave-active {
-        transition: all 1.5s ease-out;
+        transition: all 0.3s;
         max-height: 1000px;
     }
     .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
