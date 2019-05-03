@@ -1,29 +1,14 @@
-# player-tests
+# Vue Audio Player
 
 ## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn run serve
-```
-
-### Compiles and minifies for production
-```
-yarn run build
-```
-
-### Run your tests
-```
-yarn run test
-```
-
-### Lints and fixes files
-```
-yarn run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+data-show-artwork="/fpo/image.jpg"
+data-show-playlist="true"
+data-show-speed="true"
+data-show-skip="true"
+data-width="600"
+data-show-back="true"
+data-show-next="true"
+data-enable-metadata="false"
+data-freeze-metadata="false"
+data-playlist=''
+data-default-metadata=''

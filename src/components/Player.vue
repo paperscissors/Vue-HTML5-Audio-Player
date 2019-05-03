@@ -1,8 +1,12 @@
 <template>
-    <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 && !isMobile ? 'small-player': ''" v-bind:style="{ width:playerWidth }">
-        <div class="audio-player-grid">
+  <div id="player_wrapper">
+    <div class="audio-player" ref="audioplayer" :class="getSettings('width') == 600 && !isMobile ? 'small-player': ''" v-bind:style="{ maxWidth:playerWidth }">
+        <div class="audio-player-grid" :class="{ 'has-artwork' : getSettings('artwork') }">
+            <div class='artwork' v-if="getSettings('artwork')">
+              <img :src="getSettings('artwork')" alt="artwork">
+            </div>
             <div class="playback-controls">
-                <button v-if="getSettings('back')" aria-label="Play previous" class="prev" @click="previous">Previous</button>
+                <button v-if="getSettings('back')" aria-label="Play previous" :class="{ 'disabled': (playlist_index < 1) }" class="prev" @click="previous">Previous</button>
                 <button aria-label="Play/Pause audio" @mouseover="isPlayHovered = true" @mouseout="isPlayHovered = false" v-on:click.prevent="playOrPause" title="Play/Pause" :class="{ play: !playing, pause: playing }" v-if="!isBuffering || firstPlay">
                     Play/Pause
                 </button>
@@ -10,7 +14,7 @@
                 <button aria-label="Audio is buffering" class="buffering" v-if="isBuffering && !firstPlay">
                     buffering
                 </button>
-                <button v-if="getSettings('next')" aria-label="Play next" class="next" @click="next">Next</button>
+                <button v-if="getSettings('next')" aria-label="Play next" :class="{ 'disabled': isLastTrack }" class="next" @click="next">Next</button>
 
                 <template v-if="isMobile">
                     <button aria-label="Expand track info" class="expand" v-if="!expanded && display_metadata" @click="toggleExpand">Expand</button>
@@ -24,7 +28,7 @@
 
                         </div>
 
-                        <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" :formatter="showTimeForPercent" v-if="durationTime">
+                        <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" width="285" contained="true" :formatter="showTimeForPercent" v-if="durationTime">
                             <template v-slot:dot>
                                 <img alt="player time seek" src="data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='25' viewBox='0 0 7 25' width='7' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m0 0h7v25h-7z' fill='%23fff'/%3e%3c/svg%3e" class="custom-dot"/>
                             </template>
@@ -55,7 +59,7 @@
 
         </div>
 
-        <audio id='audioplayer' loop="false" ref="audiofile" :src="file" preload="auto" style="display: none;"></audio>
+        <audio id='audioplayer' loop="false" ref="audiofile" :src="current_url" preload="auto" style="display: none;"></audio>
         <transition name="fade">
             <div class="details" v-if="expanded && display_metadata || getSettings('freeze_metadata') && display_metadata">
                 <div class="meta-grid" ref="metaGrid">
@@ -128,12 +132,13 @@
 
         <div v-if="getSettings('playlist') && playlist.length > 0" class="playlist">
             <ul>
-              <li v-for="track in playlist">
-                <button class="standalone-button" :data-url="track.url" :data-name="track.name" @click="setStream" v-html="track.name"></button>
+              <li v-for="(track, index) in playlist" :key="index" :class="{ active: (index == playlist_index && playing)}">
+                <button class="standalone-button" :data-url="track.url" :data-name="track.name" :data-index="index" @click="setStream"><span v-html="track.name"></span></button>
               </li>
             </ul>
         </div>
     </div>
+  </div>
 </template>
 
 <script>
@@ -145,6 +150,7 @@
         data: function() {
             return {
                 audio: undefined,
+                playlist_index: 0,
                 currentSeconds: 0,
                 durationSeconds: 0,
                 innerLoop: false,
@@ -163,7 +169,8 @@
                 isBuffering: false,
                 track_title: this.now_playing,
                 display_metadata: this.metadata,
-                width: null
+                width: null,
+                current_url: null
             }
         },
         components: {
@@ -173,7 +180,7 @@
         computed: {
             playerWidth() {
               if (this.settings.width !== undefined && !this.isMobile) {
-                if (typeof this.settings.width == 'number') {
+                if (typeof this.settings.width == 'number' && document.getElementById('player_wrapper') !== null) {
                    let container_width = document.getElementById('player_wrapper').getBoundingClientRect();
                    if (this.settings.width > container_width.width) return container_width.width + 'px';
                    return this.settings.width + 'px';
@@ -223,12 +230,23 @@
             },
             isMobile: function() {
                 return (this.windowWidth !== 0 && this.windowWidth <= 823);
+            },
+            isLastTrack: function() {
+
+              if (this.playlist == null) return false;
+
+              if (this.playlist_index < (this.playlist.length - 1)) {
+                window.console.log("false", this.playlist_index, this.playlist.length);
+                return false;
+              }
+              window.console.log("true", this.playlist_index, this.playlist.length);
+              return true;
             }
 
         },
 
         watch: {
-            isPlaying: function(before, after) {
+            isPlaying: function() {
                 this.playing = true;
                 this.firstPlay = false;
                 this.scrub = 0;
@@ -237,7 +255,7 @@
                     this.$emit('expanded', this.playing);
                 }
             },
-            file: function(before, after) {
+            file: function() {
                 this.scrub = 0;
                 // this.audio.src = after;
                 this.playing = true;
@@ -263,27 +281,33 @@
             return true;
           },
             previous: function() {
-                let current_position = this.playlist.findIndex(x => x.url === this.audio.src);
+                if (this.playlist.length > 0 && this.playlist_index > 0) {
 
-                if (current_position > 0) {
-                    this.startNewPlayback(this.playlist[current_position-1].url);
-                    this.$emit('change-playlist-position', current_position-1);
+                    this.playlist_index = this.playlist_index - 1;
+                    this.setTrackDisplay();
+                    this.startNewPlayback(this.playlist[this.playlist_index].url);
+
+                    // emit event for external integration
+                    this.$emit('change-playlist-position', this.playlist_index);
                 }
 
                 return false;
             },
             next: function() {
-                let current_position = this.playlist.findIndex(x => x.url === this.audio.src);
                 let max_position = this.playlist.length - 1;
 
-                if (current_position < max_position) {
-                    this.startNewPlayback(this.playlist[current_position+1].url);
-                    this.$emit('change-playlist-position', current_position+1);
+                if (this.playlist_index < max_position) {
+                    this.playlist_index = this.playlist_index+1;
+                    this.setTrackDisplay();
+                    this.startNewPlayback(this.playlist[this.playlist_index].url);
+
+                    // emit event for external integration
+                    this.$emit('change-playlist-position', this.playlist_index);
                 }
 
                 return false;
             },
-            toggleExpand: function(e) {
+            toggleExpand: function() {
                 this.expanded = !this.expanded;
                 this.$emit('expanded', this.expanded);
             },
@@ -371,14 +395,20 @@
                 return true;
             },
             setStream: function(e) {
+                // set playlist index
+                if (this.getSettings('playlist')) {
+                  this.playlist_index = Number(e.currentTarget.dataset.index);
+                }
+
                 if (this.audio.src === e.currentTarget.dataset.url) {
                     this.playOrPause();
                 } else {
                     this.startNewPlayback(e.currentTarget.dataset.url);
-                    if (e.currentTarget.dataset.name !== undefined) {
-                      this.track_title = e.currentTarget.dataset.name;
-                    }
+                    this.setTrackDisplay();
                 }
+            },
+            setTrackDisplay: function() {
+              this.track_title = this.playlist[this.playlist_index].name;
             },
             startNewPlayback: function(src) {
                 this.scrub = 0;
@@ -411,7 +441,7 @@
             update: function update() {
                 this.currentSeconds = parseInt(this.audio.currentTime);
             },
-            getWindowWidth(event) {
+            getWindowWidth() {
                 this.windowWidth = window.innerWidth;
             }
         },
@@ -428,10 +458,12 @@
         mounted: function mounted() {
           this.$nextTick(function () {
             this.track_title = this.getSettings('playlist') ? this.playlist[0].name : this.now_playing;
+            this.current_url = this.getSettings('playlist') ? this.playlist[0].url : this.file;
             this.display_metadata = this.getSettings('default_metadata') ? this.getSettings('default_metadata') : this.metadata;
           });
             // this.width = this.getComponentWidth();
             this.audio = this.$el.querySelectorAll('audio')[0];
+            this.audio.loop = false;
             this.audio.addEventListener('timeupdate', this.update);
             this.audio.addEventListener('loadeddata', this.load);
             this.audio.addEventListener('playing', () => {
@@ -441,6 +473,19 @@
 
             this.audio.addEventListener('loadstart', () => {
                 this.isBuffering = true;
+            });
+
+            this.audio.addEventListener('ended', () => {
+              window.console.log(this.playlist, this.playlist.length, this.playlist_index)
+                if (this.getSettings('playlist') && this.playlist[this.playlist_index] !== undefined) {
+                  this.playlist_index = this.playlist_index + 1;
+                  this.track_title = this.playlist[this.playlist_index].name;
+                  this.startNewPlayback(this.playlist[this.playlist_index].url);
+                } else {
+                  this.playlist_index = 0;
+                  this.audio.stop();
+                  this.playing = false;
+                }
             });
 
             this.$nextTick(() => {
@@ -459,7 +504,10 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style lang="scss">
+<style src="normalize.css/normalize.css">
+
+</style>
+<style lang="scss" scoped>
 
     .audio-player {
       font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -489,6 +537,15 @@
         }
     }
 
+    @mixin disable {
+      &.disabled {
+        opacity: 0.7;
+        &:hover {
+          cursor: default;
+        }
+      }
+    }
+
     .audio-player {
         width: 100%;
         color: #fff;
@@ -513,7 +570,53 @@
                 grid-template-columns: 1fr;
                 grid-column-gap: 20px;
             }
+        }
 
+        .audio-player-grid.has-artwork {
+          min-height: 120px;
+          max-height: 120px;
+          @media (min-width: 824px) {
+              grid-template-columns:  1.3fr 1fr 3.1fr 1fr;
+              grid-column-gap: 0px;
+              grid-row-gap: 0px;
+              .artwork {
+                grid-row: 1 / span 2;
+                img { max-height: 120px; }
+              }
+              .playback-controls {
+                grid-column: 2 / span 2;
+                padding-bottom: 5px;
+              }
+
+              .current-track {
+                padding-top: 5px;
+                padding-left: 15px;
+                grid-column: 2 / span 3;
+                grid-row: 1;
+              }
+
+              .time-controls {
+                grid-column: 4;
+                grid-row: 2;
+                padding-bottom: 5px;
+              }
+
+              .playback-controls button:not(.button-override) {
+                width: 25px !important;
+              }
+
+              .vue-slider-component {
+                margin-left: 6px;
+              }
+          }
+
+          // @media (min-width: 641px) and (max-width: 823px) {
+          //     display: grid;
+          //     align-items: center;
+          //     margin-top: 10px;
+          //     grid-template-columns: 1fr;
+          //     grid-column-gap: 20px;
+          // }
         }
 
 
@@ -528,6 +631,8 @@
             .prev {
                 background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2' transform='matrix(-1 0 0 -1 40 40)'/%3e%3cg fill='%23fff'%3e%3cpath d='m27.5 29.2416-10.9015-8.7416 10.9015-8.7416z' stroke='%23fff' stroke-width='2'/%3e%3cpath d='m17.9999 31h5.44444v21h-5.44444z' transform='matrix(-1 0 0 -1 35.9998 62)'/%3e%3c/g%3e%3c/svg%3e");
                 margin-right: 6px;
+
+                @include disable;
             }
 
             .play {
@@ -549,6 +654,7 @@
 
             .next {
                 background: transparent url("data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='40' viewBox='0 0 40 40' width='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='19' stroke='%23fff' stroke-width='2'/%3e%3cg fill='%23fff'%3e%3cpath d='m12.5 10.7583 10.9015 8.7417-10.9015 8.7416z' stroke='%23fff' stroke-width='2'/%3e%3cpath d='m22.0001 9h5.44444v21h-5.44444z'/%3e%3c/g%3e%3c/svg%3e");
+                @include disable;
             }
 
             .expand {
@@ -585,6 +691,8 @@
                     grid-column: 1;
                     grid-row: 2;
                     max-width: 600px;
+
+
 
                     .vue-slider-process {
                         border-radius: 0px;
@@ -855,7 +963,6 @@
 
     div.playlist {
       color: #000;
-      padding-top: 10px;
       ul {
       list-style: none;
       text-indent: 0px;
@@ -872,15 +979,26 @@
             color: #000;
             font-size: 14px;
             text-align: left;
+            width: 100%;
 
-
-            &:active {
-              color: pink;
-            }
           }
 
-          margin-bottom: 8px;
-          padding-bottom: 8px;
+          &.active {
+            color: #fff;
+            button {
+
+              filter: invert(100%);
+              -webkit-filter: invert(100%);
+              span {
+                filter: invert(0%)!important;
+                -webkit-filter: invert(0%) !important;
+              }
+            }
+            background-color: #000;
+          }
+
+
+          padding: 8px 0px 8px 0px;
           border-bottom: 1px solid #000;
       }
     }
@@ -895,8 +1013,14 @@
           }
         }
 
-        .current-track .scrub .now-playing {
-          grid-column: span 2;
+        .current-track .scrub {
+          .vue-slider-process {
+              // max-width: 285px;
+              width: 285px !important;
+          }
+          .now-playing {
+            grid-column: span 2;
+          }
         }
 
         .current-track .scrub .vue-slider-component .custom-dot {
