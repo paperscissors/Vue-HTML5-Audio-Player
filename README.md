@@ -1,4 +1,5 @@
 # Vue Audio Player
+This is super duper pre-alpha. Don't use this in a production setting.
 
 ## Project setup
 data-show-artwork="/fpo/image.jpg"
