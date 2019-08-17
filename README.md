@@ -11,7 +11,7 @@ Clone this repo, run `npm install` or `yarn install`.
 ## Notes
 I will be adding more in depth instructions soon.
 
-####(Current embed attributes)
+### (Current embed attributes)
 ```
 data-show-artwork="/fpo/image.jpg"
 data-show-playlist="true"
@@ -26,7 +26,7 @@ data-playlist=''
 data-default-metadata=''
 ```
 
-####Roadmap
+## Roadmap
 * Resolve playlist functionality
 * Props vs. passed embed attribute graceful fallback
 * Improve style portability and overrides
