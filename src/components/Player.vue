@@ -28,9 +28,9 @@
 
                         </div>
 
-                        <vue-slider ref="slider" v-model="scrub" @callback="seek" tooltip="hover" width="285" contained="true" :formatter="showTimeForPercent" v-if="durationTime">
-                            <template v-slot:dot>
-                                <img alt="player time seek" src="data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='25' viewBox='0 0 7 25' width='7' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m0 0h7v25h-7z' fill='%23fff'/%3e%3c/svg%3e" class="custom-dot"/>
+                        <vue-slider ref="slider" v-model="currentSeconds" :silent="true" :value="currentSeconds" :max="durationSeconds"  @callback="seek" tooltip="hover" width="200" contained="true" :formatter="showTimeForPercent" v-if="durationTime" :lazy="true" :contained="true">
+                            <template v-slot:dot="{ value, focus }">
+                                <img alt="player time seek" src="data:image/svg+xml;charset=UTF-8,%3csvg fill='none' height='25' viewBox='0 0 7 25' width='7' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m0 0h7v25h-7z' fill='%23fff'/%3e%3c/svg%3e" :class="['custom-dot', { focus }]"/>
                             </template>
                         </vue-slider>
                         <div class="time" v-if="durationTime">
@@ -153,6 +153,7 @@
                 playlist_index: 0,
                 currentSeconds: 0,
                 durationSeconds: 0,
+                maxSeconds: 0,
                 innerLoop: false,
                 loaded: false,
                 playing: false,
@@ -191,20 +192,20 @@
             },
             currentTime: function currentTime() {
                 if (Number.isInteger(this.currentSeconds)) {
-                    return this.convertTimeHHMMSS(this.currentSeconds);
+                    return this.convertTimeHHMMSS(Math.floor(this.currentSeconds));
                 }
 
                 return false;
             },
             durationTime: function durationTime() {
                 if (Number.isInteger(this.durationSeconds)) {
-                    return this.convertTimeHHMMSS(this.durationSeconds);
+                    return this.convertTimeHHMMSS(Math.floor(this.durationSeconds));
                 }
 
                 return false;
             },
             percentComplete: function percentComplete() {
-                return parseInt(this.currentSeconds / this.durationSeconds * 100);
+                return parseInt(Math.floor(this.currentSeconds) / Math.floor(this.durationSeconds) * 100);
             },
             muted: function muted() {
                 return this.volume / 100 === 0;
@@ -236,10 +237,9 @@
               if (this.playlist == null) return false;
 
               if (this.playlist_index < (this.playlist.length - 1)) {
-                window.console.log("false", this.playlist_index, this.playlist.length);
                 return false;
               }
-              window.console.log("true", this.playlist_index, this.playlist.length);
+
               return true;
             }
 
@@ -250,6 +250,7 @@
                 this.playing = true;
                 this.firstPlay = false;
                 this.scrub = 0;
+
                 if (this.isMobile) {
                     this.expanded = this.playing;
                     this.$emit('expanded', this.playing);
@@ -327,6 +328,7 @@
             },
             showTimeForPercent: function (value) {
                 if (this.loaded) {
+                  console.log(this.audio.duration)
                     if (!isNaN(parseInt(this.audio.duration * (value * 0.01)))) {
                         value = this.convertTimeHHMMSS(parseInt(this.audio.duration * (value * 0.01)));
                     }
@@ -388,7 +390,7 @@
                 if (this.audio.readyState >= 2) {
                     this.loaded = true;
                     this.durationSeconds = parseInt(this.audio.duration);
-
+                    this.maxSeconds = this.durationSeconds+1;
                     return true;
                 }
 
@@ -440,6 +442,9 @@
             },
             update: function update() {
                 this.currentSeconds = parseInt(this.audio.currentTime);
+
+                if (typeof parseInt( this.currentSeconds/ this.audio.duration *100) != 'NaN')
+                  this.scrub = parseInt( this.currentSeconds/ this.audio.duration *100);
             },
             getWindowWidth() {
                 this.windowWidth = window.innerWidth;
@@ -464,7 +469,7 @@
             // this.width = this.getComponentWidth();
             this.audio = this.$el.querySelectorAll('audio')[0];
             this.audio.loop = false;
-            this.audio.addEventListener('timeupdate', this.update);
+            this.audio.addEventListener('timeupdate', this.update); // this is where it updates the position?
             this.audio.addEventListener('loadeddata', this.load);
             this.audio.addEventListener('playing', () => {
                 this.isBuffering = false;
@@ -476,14 +481,13 @@
             });
 
             this.audio.addEventListener('ended', () => {
-              window.console.log(this.playlist, this.playlist.length, this.playlist_index)
-                if (this.getSettings('playlist') && this.playlist[this.playlist_index] !== undefined) {
+                if (this.getSettings('playlist') && typeof this.playlist[this.playlist_index+1] !== 'undefined') {
                   this.playlist_index = this.playlist_index + 1;
                   this.track_title = this.playlist[this.playlist_index].name;
                   this.startNewPlayback(this.playlist[this.playlist_index].url);
                 } else {
                   this.playlist_index = 0;
-                  this.audio.stop();
+                  // this.audio.stop();
                   this.playing = false;
                 }
             });
@@ -504,9 +508,7 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style src="normalize.css/normalize.css">
-
-</style>
+<style src="normalize.css/normalize.css"></style>
 <style lang="scss" scoped>
 
     .audio-player {
@@ -692,8 +694,6 @@
                     grid-row: 2;
                     max-width: 600px;
 
-
-
                     .vue-slider-process {
                         border-radius: 0px;
                     }
@@ -718,6 +718,7 @@
                             margin-top: -2px !important;
                         }
                         margin-left: 4px !important;
+                         transition-duration: 0s !important;
                     }
 
                     .vue-slider-process {
